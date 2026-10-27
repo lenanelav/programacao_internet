@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Excluir Categoria</h2>
+
+<div class="alert alert-warning" style="background-color: #fff3cd; padding: 10px; margin-bottom: 15px; border: 1px solid #ffeeba;">
+    <strong>Aviso:</strong> Esta categoria poderá estar vinculada a notícias. Caso existam notícias associadas, a exclusão será bloqueada.
+</div>
+
+<p>Deseja realmente excluir a categoria: <strong>{{ categoria.nome }}</strong>?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" style="background-color: red; color: white;">Confirmar exclusão</button>
+    <a href="{% url 'categoria_lista' %}">Cancelar</a>
+</form>
+{% endblock %}

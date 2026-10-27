@@ -1,4 +1,6 @@
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from django.db.models import ProtectedError
 
 from . import forms, models
 
@@ -25,6 +27,8 @@ def categoria_create_view(request):
     if request.method == "POST":
         form = forms.CategoriaForm(request.POST)
         if form.is_valid():
+            models.Categoria.objects.create(nome=form.cleaned_data["nome"])
+            messages.success(request, "Categoria cadastrada com sucesso!")
             nome = form.cleaned_data["nome"]
             models.Categoria.objects.create(
                 nome=nome
@@ -55,9 +59,30 @@ def categoria_update_view(request, categoria_id):
     })
 
 def categoria_delete_view(request, categoria_id):
-    categoria = models.Categoria.objects.get(id=categoria_id)
-    categoria.delete()
-    return redirect("noticias:categorias")
+  categoria = get_object_or_404(models.Categoria, id=categoria_id)
+
+  if request.method == "POST":
+    try:
+      categoria.delete()
+      messages.success(request, "Categoria excluída com sucesso!")
+      return redirect("noticias:categorias")
+    except ProtectedError:
+      messages.error(
+          request,
+          "Não é possível excluir esta categoria, pois existem notícias"
+          " vinculadas a ela.",
+      )
+      return redirect("noticias:categorias")
+
+  # Certifica-te de que este 'return' está aqui no final, fora do 'if':
+  return render(
+      request,
+      "noticias/categoria/categoria_confirmar_exclusao.html",
+      {"categoria": categoria},
+  )
+
+
+    
 
 def tags_lista_view(request):
     tags = models.Tag.objects.all()
@@ -78,6 +103,7 @@ def tag_create_view(request):
         form = forms.TagForm(request.POST)
         if form.is_valid():
             form.save()
+            messages.success(request, "Tag cadastrada com sucesso!")
             return redirect("noticias:tags")
     else:
         form = forms.TagForm()
@@ -104,9 +130,14 @@ def tag_update_view(request, tag_id):
     })
 
 def tag_delete_view(request, tag_id):
-    tag = models.Tag.objects.get(id=tag_id)
+  tag = get_object_or_404(models.Tag, id=tag_id)
+
+  if request.method == "POST":
     tag.delete()
+    messages.success(request, "Tag excluída com sucesso!")
     return redirect("noticias:tags")
+
+  return render(request, "noticias/tag_confirmar_exclusao.html", {"tag": tag})
 
 def noticia_create_view(request):
     if request.method == "POST":
